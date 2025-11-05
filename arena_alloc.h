@@ -3,7 +3,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #define ARENA_FULL -1
-
+/*
+  struct for the arena brk is the "break"
+  when you push onto it your given the break of the arena
+  and the brk is moved up by the size of your allocation
+*/
 typedef struct arena_t {
   void *buffer;
   int brk;
@@ -17,6 +21,7 @@ static inline arena arena_new(int cap) {
   ret.buffer = calloc(cap, 1);
   return ret;
 }
+/*returns NULL if arena is full*/
 static inline void *arena_alloc(arena *ar, int size) {
   if ((ar->brk + size - 1) >= ar->cap) {
     return NULL;
@@ -25,12 +30,14 @@ static inline void *arena_alloc(arena *ar, int size) {
   ar->brk += (size);
   return ret;
 }
+/*returns -1 if full*/
 static inline int arena_used(arena *ar) {
   if (ar->brk >= ar->cap) {
     return ARENA_FULL;
   }
   return ar->brk;
 }
+/*frees the current arena*/
 static inline void arena_free(arena *ar) {
   free(ar->buffer);
   ar->buffer = NULL;
@@ -44,16 +51,20 @@ static inline void arena_free(arena *ar) {
  * management if you use this please be mindful of this as it can segfault your
  * program
  */
-void arena_realloc(arena *ar, int size) {
+static inline void arena_realloc(arena *ar, int size) {
   ar->buffer = realloc(ar->buffer, size);
   ar->cap = size;
 }
+/*
+  Holds a dynamic array of buffers that contains seperate "pages"(basically arenas)
+  the page size is determined when you use the garena_new function.
+*/
 typedef struct garena_t {
   arena *pages;
   int page_size;
   int current_page;
   int page_count;
-  arena alloc_ar; // use arena for ease of use
+  arena alloc_ar; 
 } garena;
 
 static inline garena garena_new(int page_size) {
@@ -66,6 +77,10 @@ static inline garena garena_new(int page_size) {
   ret.pages[ret.current_page] = arena_new(ret.page_size);
   return ret;
 }
+/*
+  internal function there really isn't a usecase for this unless
+  you want to allocate your own pages.
+*/
 static inline arena *garena_page_new(garena *ar) {
   if (ar->current_page + 1 == ar->page_count) {
     arena_realloc(&ar->alloc_ar,
@@ -78,6 +93,7 @@ static inline arena *garena_page_new(garena *ar) {
   arena *current_page = &ar->pages[ar->current_page];
   return current_page;
 }
+/*can return NULL on failure*/
 static inline void *garena_alloc(garena *ar, int size) {
   arena *current_page = &ar->pages[ar->current_page];
   if ((current_page->brk + size) >= current_page->cap) {
@@ -86,6 +102,7 @@ static inline void *garena_alloc(garena *ar, int size) {
   void *ret = arena_alloc(current_page, size);
   return ret;
 }
+/*returns the amount used of the current page return -1 if current page is full*/
 static inline int garena_used(garena *ar) {
   arena *current_page = &ar->pages[ar->current_page];
   if (current_page->brk >= current_page->cap) {
@@ -93,6 +110,7 @@ static inline int garena_used(garena *ar) {
   }
   return current_page->brk;
 }
+/*deconstructor for the garena*/
 static inline void garena_destroy(garena *gar) {
   for (int i = gar->current_page; i >= 0; i--) {
     arena *current_page = &gar->pages[i];
