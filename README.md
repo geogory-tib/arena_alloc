@@ -8,6 +8,7 @@ Example use case
 #include <stdio.h>
 #inlcude <stdlib.h>
 #include <string.h>
+#include "arena_alloc.h"
 int main(void){
   arena ar_buf = arena_new(500);
   char *str = arena_alloc(&ar_buf,10);
@@ -19,13 +20,13 @@ int main(void){
 ```
 If arena_alloc fails it will return a NULL pointer. You can get the size remaining in the arena by using the arena_used() function if it is full it will return -1.   
 
-The garena is much like the arenea exepect that it is a growable arena that works on a per "page" basis. This is so you do not invaildate any previous pointers to the arena's buffer.   
-Currently there is an issue witht he garena as when you reallocate the buffer when the page buffer gets filled it segfaults(I haven't had the time to look at it yet).
-
+The garena is much like the arena except that it is groable and allocates on a per "page" basis. This is so any previous pointers are not invaildated.     
+This of course comes with the downside of more computational and memory overhead due to the more complex struct that is needed to manage such a allocator.
 ```
 #include <stdio.h>
 #inlcude <stdlib.h>
 #include <string.h>
+#include "arena_alloc.h"
 int main(void){
   garena ar_buf = arena_new(500);
   char *str = garena_alloc(&ar_buf,10);
