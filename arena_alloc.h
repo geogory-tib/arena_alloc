@@ -43,17 +43,6 @@ static inline void arena_free(arena *ar) {
   ar->cap = 0;
   ar->brk = 0;
 }
-/* the following function can invaildate all of your current refrences if you
- * call this. this is mainly used as an internal thing for the garena. there is
- * only one pointer I have to keep track of and it's basicly just the buffer for
- * the pages so im  just using this as a dynamic array of sorts to handle page
- * management if you use this please be mindful of this as it can segfault your
- * program
- */
-static inline void arena_realloc(arena *ar, int size) {
-  ar->buffer = realloc(ar->buffer, size);
-  ar->cap = size;
-}
 /*
   Holds a dynamic array of buffers that contains seperate "pages"(basically arenas)
   the page size is determined when you use the garena_new function.
