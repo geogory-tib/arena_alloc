@@ -59,7 +59,7 @@ static inline garena garena_new(int page_size) {
   ret.page_size = page_size;
   ret.current_page = 0;
   ret.page_count = 10;
-  ret.pages = calloc(ret.page_count,sizeof(arena)); 
+  ret.pages = (arena *)calloc(ret.page_count,sizeof(arena)); 
   ret.pages[ret.current_page] = arena_new(ret.page_size);
   return ret;
 }
@@ -70,7 +70,7 @@ static inline garena garena_new(int page_size) {
 static inline arena *garena_page_new(garena *ar) {
   if (ar->current_page + 1 >= ar->page_count) { 
     ar->page_count += 10;
-    ar->pages = realloc(ar->pages, (sizeof(arena) * ar->page_count));
+    ar->pages = (arena *)realloc(ar->pages, (sizeof(arena) * ar->page_count));
   }
   ar->pages[ar->current_page + 1] = arena_new(ar->page_size);
   ar->current_page++;
